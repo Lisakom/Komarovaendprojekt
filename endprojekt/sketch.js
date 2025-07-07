@@ -1,14 +1,16 @@
+//variablen
 let mic;
 let angles = [];
-let radius = 400;          // увеличил основной круг
-let basePadRadius = 100;    // увеличил размер подушек
-let padColors = [];
+let radius = 400;          // Radius des Hauptkreises
+let basePadRadius = 100;    // Basisgröße der Pads
+let padColors = [];          
 let activeIndex = 0;
 let waveCircles = [];
 let centerWaves = [];      // волны от центрального круга
 let threshold = 0.02; // минимальный уровень громкости для реакции
 let saveButton;
 let backgroundParticles = [];
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -18,12 +20,16 @@ function setup() {
   fill(255);
   text('Click anywhere to start', width / 2, height / 2);
 
-  for (let i = 0; i < 8; i++) {
+
+  // Erzeuge 8 graue Farben und speichere sie in padColors
+  for (let i = 0; i < 8; i++) { 
     let val = max(0, 80 - i * 5);
     let grayShade = color(val, val, val);
     padColors.push(grayShade);
-    angles.push(i * 45);
+    angles.push(i * 45); // Speichere den Winkel für Positionierung auf dem Kreis
   }
+
+  // Erzeuge 200 Hintergrundpartikel mit zufälligen Eigenschaften
   for (let i = 0; i < 200; i++) {
     backgroundParticles.push({
       x: random(width),
