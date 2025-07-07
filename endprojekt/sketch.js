@@ -7,6 +7,8 @@ let activeIndex = 0;
 let waveCircles = [];
 let centerWaves = [];      // волны от центрального круга
 let threshold = 0.02; // минимальный уровень громкости для реакции
+let saveButton;
+let backgroundParticles = [];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -22,10 +24,18 @@ function setup() {
     padColors.push(grayShade);
     angles.push(i * 45);
   }
+  for (let i = 0; i < 200; i++) {
+    backgroundParticles.push({
+      x: random(width),
+      y: random(height),
+      size: random(1, 3),
+      speed: random(0.1, 0.5),
+      alpha: random(50, 150)
+    });
+  }
 }
 
 function drawMetallicCircle(x, y, r) {
-  noStroke();
 
   // 1) Плавный градиент с мягким переходом от светлого центра к чуть тёмнее краям
   for (let i = r; i > 0; i--) {
@@ -188,6 +198,7 @@ function mousePressed() {
   mic = new p5.AudioIn();
   mic.start(() => {
     console.log('Mic started');
+    createSaveButton()
   }, (err) => {
     console.error('Mic error:', err);
   });
@@ -196,6 +207,13 @@ function mousePressed() {
 function draw() {
   background(0);
   colorMode(RGB, 255);
+  noStroke();
+for (let p of backgroundParticles) {
+  fill(180, 200, 255, p.alpha);
+  circle(p.x, p.y, p.size);
+  p.y += p.speed;
+  if (p.y > height) p.y = 0;
+}
 
   if (!mic) {
     fill(255);
@@ -209,7 +227,7 @@ function draw() {
   let bump = map(vol, 0, 0.3, 0, 60);
 
   // Создаем волну от центра по звуку (реже, чтобы не слишком часто)
-  if (vol > threshold && frameCount % 10 === 0) {
+  if (vol > threshold && frameCount % 15 === 0) {
     centerWaves.push({
       x: width / 2,
       y: height / 2,
@@ -248,16 +266,23 @@ function draw() {
   }
 
   // При звуке создаём волны от подушек (рандомно)
-  if (vol > threshold && frameCount % 6 === 0) {
+  if (vol > threshold && frameCount % 2 === 0) {
     activeIndex = floor(random(0, 8));
 
     let angle = angles[activeIndex];
     let baseX = width / 2 + cos(angle) * (radius - 60);
     let baseY = height / 2 + sin(angle) * (radius - 60);
 
-    for (let i = 0; i < 3; i++) {
-      let offsetX = random(-10, 10);
-      let offsetY = random(-10, 10);
+      let nextIndex = (activeIndex + 1) % 8;
+  let angle2 = angles[nextIndex];
+  let nextX = width / 2 + cos(angle2) * (radius - 60);
+  let nextY = height / 2 + sin(angle2) * (radius - 60);
+
+  drawLightning(baseX, baseY, nextX, nextY);
+
+    for (let i = 0; i < 20; i++) {
+      let offsetX = i * 20;  // Смещаем каждую волну дальше по X
+      let offsetY = i * 20;  // или Y, или по диагонали
       let size = basePadRadius + random(-10, 10);
 
       let base = padColors[activeIndex];
@@ -278,6 +303,7 @@ function draw() {
         color: waveColor,
         angle: angle + 180
       });
+      
     }
   }
 
@@ -317,11 +343,45 @@ let maxWaveHeight = radius * 9;  // высота волны в 3.5 раза бо
     strokeWeight(4);
     ellipse(wave.x, wave.y, wave.radius * 2);
 
-    wave.radius += 8;
-    wave.alpha -= 3;
+    wave.radius += 4;
+    wave.alpha -= 1.5;
 
     if (wave.alpha <= 0) {
       centerWaves.splice(i, 1);
     }
   }
+}
+function createSaveButton() {
+  if (saveButton) return;
+  
+
+  saveButton = createButton('💾 Save Image');
+  saveButton.position(20, 20);
+  
+  saveButton.mousePressed(() => {
+    saveCanvas('my-visual', 'png');
+  });
+  saveButton.class('save-btn'); // 👈 Применим CSS-класс
+  saveButton.style("background", "rgba(255, 255, 255, 0.15)");
+  saveButton.style("color", "#ffffff");
+  saveButton.style("border", "1px solid rgba(255, 255, 255, 0.3)");
+  saveButton.style("padding", "8px 12px");
+  saveButton.style("border-radius", "8px");
+  saveButton.style("backdrop-filter", "blur(5px)");
+  
+}
+function drawLightning(x1, y1, x2, y2) {
+  stroke(180, 220, 255, 200);
+  strokeWeight(2);
+  noFill();
+
+  let segments = 10;
+  beginShape();
+  for (let i = 0; i <= segments; i++) {
+    let t = i / segments;
+    let x = lerp(x1, x2, t) + random(-5, 5);
+    let y = lerp(y1, y2, t) + random(-5, 5);
+    vertex(x, y);
+  }
+  endShape();
 }
